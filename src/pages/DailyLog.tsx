@@ -40,35 +40,52 @@ const DailyLog = () => {
     label, 
     value, 
     onChange, 
-    type = 'number',
     suffix,
-    min = 0 
+    min = 0,
+    step = 1
   }: { 
     label: string; 
     value: number; 
     onChange: (val: number) => void;
-    type?: string;
     suffix?: string;
     min?: number;
-  }) => (
-    <div className="space-y-2">
-      <Label className="text-sm text-muted-foreground">{label}</Label>
-      <div className="relative">
-        <Input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          min={min}
-          className="bg-background/50 pr-12"
-        />
-        {suffix && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-            {suffix}
-          </span>
-        )}
+    step?: number;
+  }) => {
+    const [localValue, setLocalValue] = useState(value.toString());
+    
+    const handleBlur = () => {
+      const numValue = parseFloat(localValue) || 0;
+      const finalValue = Math.max(min, numValue);
+      onChange(finalValue);
+      setLocalValue(finalValue.toString());
+    };
+
+    return (
+      <div className="space-y-2">
+        <Label className="text-sm text-muted-foreground">{label}</Label>
+        <div className="relative">
+          <Input
+            type="text"
+            inputMode="decimal"
+            value={localValue}
+            onChange={(e) => setLocalValue(e.target.value)}
+            onBlur={handleBlur}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleBlur();
+              }
+            }}
+            className="bg-background/50 pr-12"
+          />
+          {suffix && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+              {suffix}
+            </span>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const ToggleField = ({
     label,

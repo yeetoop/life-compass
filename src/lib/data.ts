@@ -86,47 +86,8 @@ export interface PillarScore {
   change: number;
 }
 
-// Generate mock historical data
-const generateMockData = (): DailyLog[] => {
-  const logs: DailyLog[] = [];
-  const today = new Date();
-  
-  for (let i = 60; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    
-    logs.push({
-      date: date.toISOString().split('T')[0],
-      finance: {
-        incomeAdded: Math.random() > 0.7 ? Math.floor(Math.random() * 500) + 100 : 0,
-        moneySpent: Math.floor(Math.random() * 100) + 20,
-        savingsAdded: Math.random() > 0.5 ? Math.floor(Math.random() * 200) : 0,
-      },
-      career: {
-        minutesStudied: Math.floor(Math.random() * 120),
-        skillsPracticed: Math.floor(Math.random() * 3),
-        projectWork: Math.random() > 0.4,
-      },
-      health: {
-        sleepHours: 5 + Math.random() * 4,
-        workoutDone: Math.random() > 0.5,
-        moodScale: Math.floor(Math.random() * 5) + 1,
-      },
-      spirituality: {
-        prayerDone: Math.random() > 0.3,
-        reflectionMinutes: Math.floor(Math.random() * 30),
-      },
-      hobbies: {
-        practiceMinutes: Math.floor(Math.random() * 60),
-        techniquePracticed: Math.random() > 0.6,
-      },
-    });
-  }
-  
-  return logs;
-};
-
-export const mockLogs = generateMockData();
+// Empty logs array - no mock data, user builds their own history
+export const mockLogs: DailyLog[] = [];
 
 // Calculate pillar score from logs
 export const calculatePillarScore = (logs: DailyLog[], pillar: Pillar, days: number = 30): number => {
