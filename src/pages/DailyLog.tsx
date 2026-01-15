@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from '@/components/Layout';
 import { PILLARS, DailyLog as DailyLogType } from '@/lib/data';
+import { useLogs } from '@/context/LogContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,18 +11,34 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
+const createEmptyLog = (date: string): DailyLogType => ({
+  date,
+  finance: { incomeAdded: 0, moneySpent: 0, savingsAdded: 0 },
+  career: { minutesStudied: 0, skillsPracticed: 0, projectWork: false },
+  health: { sleepHours: 7, workoutDone: false, moodScale: 3 },
+  spirituality: { prayerDone: false, reflectionMinutes: 0 },
+  hobbies: { practiceMinutes: 0, techniquePracticed: false },
+});
+
 const DailyLog = () => {
   const today = new Date().toISOString().split('T')[0];
+  const [selectedDate, setSelectedDate] = useState(today);
   const [openSections, setOpenSections] = useState<string[]>(PILLARS.map(p => p.id));
+  const { addLog, getLogByDate } = useLogs();
   
-  const [formData, setFormData] = useState<DailyLogType>({
-    date: today,
-    finance: { incomeAdded: 0, moneySpent: 0, savingsAdded: 0 },
-    career: { minutesStudied: 0, skillsPracticed: 0, projectWork: false },
-    health: { sleepHours: 7, workoutDone: false, moodScale: 3 },
-    spirituality: { prayerDone: false, reflectionMinutes: 0 },
-    hobbies: { practiceMinutes: 0, techniquePracticed: false },
-  });
+  const [formData, setFormData] = useState<DailyLogType>(() => 
+    getLogByDate(today) || createEmptyLog(today)
+  );
+
+  // Update form when date changes
+  useEffect(() => {
+    const existingLog = getLogByDate(selectedDate);
+    if (existingLog) {
+      setFormData(existingLog);
+    } else {
+      setFormData(createEmptyLog(selectedDate));
+    }
+  }, [selectedDate, getLogByDate]);
 
   const toggleSection = (id: string) => {
     setOpenSections(prev => 
@@ -30,9 +47,9 @@ const DailyLog = () => {
   };
 
   const handleSave = () => {
-    // In a real app, this would save to a database
+    addLog({ ...formData, date: selectedDate });
     toast.success('Day logged successfully', {
-      description: `Entry saved for ${new Date(formData.date).toLocaleDateString()}`,
+      description: `Entry saved for ${new Date(selectedDate).toLocaleDateString()}`,
     });
   };
 
@@ -42,16 +59,18 @@ const DailyLog = () => {
     onChange, 
     suffix,
     min = 0,
-    step = 1
   }: { 
     label: string; 
     value: number; 
     onChange: (val: number) => void;
     suffix?: string;
     min?: number;
-    step?: number;
   }) => {
     const [localValue, setLocalValue] = useState(value.toString());
+    
+    useEffect(() => {
+      setLocalValue(value.toString());
+    }, [value]);
     
     const handleBlur = () => {
       const numValue = parseFloat(localValue) || 0;
@@ -118,8 +137,8 @@ const DailyLog = () => {
           <Label className="text-sm text-muted-foreground mb-2 block">Date</Label>
           <Input
             type="date"
-            value={formData.date}
-            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
             className="bg-card w-48"
           />
         </div>

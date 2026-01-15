@@ -1,15 +1,17 @@
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { TrendChart } from '@/components/TrendChart';
-import { PILLARS, mockLogs, getPillarScores, getScoreHistory, Pillar } from '@/lib/data';
+import { useLogs } from '@/context/LogContext';
+import { PILLARS, getPillarScores, getScoreHistory, Pillar } from '@/lib/data';
 import { cn } from '@/lib/utils';
 
 const PillarDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const { logs } = useLogs();
   const pillar = PILLARS.find(p => p.id === id);
-  const scores = getPillarScores(mockLogs);
+  const scores = getPillarScores(logs);
   const score = scores.find(s => s.pillar === id);
-  const history = getScoreHistory(mockLogs, id as Pillar, 30);
+  const history = getScoreHistory(logs, id as Pillar, 30);
 
   if (!pillar || !score) {
     return (
@@ -25,9 +27,14 @@ const PillarDetail = () => {
   }
 
   // Get raw data stats for the detail view
-  const last30Days = mockLogs.slice(-30);
+  const last30Days = logs.slice(-30);
+  const hasData = logs.length > 0;
   
   const getDetailedStats = () => {
+    if (!hasData) {
+      return { metrics: [], explanation: '' };
+    }
+    
     switch (id) {
       case 'finance':
         return {
@@ -35,7 +42,7 @@ const PillarDetail = () => {
             { label: 'Total Income', value: `$${last30Days.reduce((s, l) => s + l.finance.incomeAdded, 0).toLocaleString()}` },
             { label: 'Total Spent', value: `$${last30Days.reduce((s, l) => s + l.finance.moneySpent, 0).toLocaleString()}` },
             { label: 'Total Saved', value: `$${last30Days.reduce((s, l) => s + l.finance.savingsAdded, 0).toLocaleString()}` },
-            { label: 'Avg Daily Spend', value: `$${Math.round(last30Days.reduce((s, l) => s + l.finance.moneySpent, 0) / 30)}` },
+            { label: 'Avg Daily Spend', value: `$${Math.round(last30Days.reduce((s, l) => s + l.finance.moneySpent, 0) / Math.max(1, last30Days.length))}` },
           ],
           explanation: 'This score reflects your savings-to-spending ratio. Higher savings relative to spending improves your score.',
         };
@@ -45,17 +52,17 @@ const PillarDetail = () => {
             { label: 'Total Study Time', value: `${last30Days.reduce((s, l) => s + l.career.minutesStudied, 0)} min` },
             { label: 'Skills Practiced', value: `${last30Days.reduce((s, l) => s + l.career.skillsPracticed, 0)} total` },
             { label: 'Project Days', value: `${last30Days.filter(l => l.career.projectWork).length} days` },
-            { label: 'Avg Daily Study', value: `${Math.round(last30Days.reduce((s, l) => s + l.career.minutesStudied, 0) / 30)} min` },
+            { label: 'Avg Daily Study', value: `${Math.round(last30Days.reduce((s, l) => s + l.career.minutesStudied, 0) / Math.max(1, last30Days.length))} min` },
           ],
           explanation: 'Calculated from study time and project work consistency. Regular practice and project engagement boost this score.',
         };
       case 'health':
         return {
           metrics: [
-            { label: 'Avg Sleep', value: `${(last30Days.reduce((s, l) => s + l.health.sleepHours, 0) / 30).toFixed(1)} hrs` },
+            { label: 'Avg Sleep', value: `${(last30Days.reduce((s, l) => s + l.health.sleepHours, 0) / Math.max(1, last30Days.length)).toFixed(1)} hrs` },
             { label: 'Workout Days', value: `${last30Days.filter(l => l.health.workoutDone).length} days` },
-            { label: 'Avg Mood', value: `${(last30Days.reduce((s, l) => s + l.health.moodScale, 0) / 30).toFixed(1)}/5` },
-            { label: 'Workout Rate', value: `${Math.round(last30Days.filter(l => l.health.workoutDone).length / 30 * 100)}%` },
+            { label: 'Avg Mood', value: `${(last30Days.reduce((s, l) => s + l.health.moodScale, 0) / Math.max(1, last30Days.length)).toFixed(1)}/5` },
+            { label: 'Workout Rate', value: `${Math.round(last30Days.filter(l => l.health.workoutDone).length / Math.max(1, last30Days.length) * 100)}%` },
           ],
           explanation: 'Combines sleep quality, workout frequency, and mood tracking. Balanced across all three areas leads to the highest scores.',
         };
@@ -64,8 +71,8 @@ const PillarDetail = () => {
           metrics: [
             { label: 'Prayer Days', value: `${last30Days.filter(l => l.spirituality.prayerDone).length} days` },
             { label: 'Total Reflection', value: `${last30Days.reduce((s, l) => s + l.spirituality.reflectionMinutes, 0)} min` },
-            { label: 'Consistency', value: `${Math.round(last30Days.filter(l => l.spirituality.prayerDone).length / 30 * 100)}%` },
-            { label: 'Avg Reflection', value: `${Math.round(last30Days.reduce((s, l) => s + l.spirituality.reflectionMinutes, 0) / 30)} min` },
+            { label: 'Consistency', value: `${Math.round(last30Days.filter(l => l.spirituality.prayerDone).length / Math.max(1, last30Days.length) * 100)}%` },
+            { label: 'Avg Reflection', value: `${Math.round(last30Days.reduce((s, l) => s + l.spirituality.reflectionMinutes, 0) / Math.max(1, last30Days.length))} min` },
           ],
           explanation: 'Based on prayer/meditation consistency and reflection time. Daily practice weighs more heavily than occasional long sessions.',
         };
@@ -74,8 +81,8 @@ const PillarDetail = () => {
           metrics: [
             { label: 'Total Practice', value: `${last30Days.reduce((s, l) => s + l.hobbies.practiceMinutes, 0)} min` },
             { label: 'Technique Days', value: `${last30Days.filter(l => l.hobbies.techniquePracticed).length} days` },
-            { label: 'Avg Daily Practice', value: `${Math.round(last30Days.reduce((s, l) => s + l.hobbies.practiceMinutes, 0) / 30)} min` },
-            { label: 'Engagement Rate', value: `${Math.round(last30Days.filter(l => l.hobbies.practiceMinutes > 0).length / 30 * 100)}%` },
+            { label: 'Avg Daily Practice', value: `${Math.round(last30Days.reduce((s, l) => s + l.hobbies.practiceMinutes, 0) / Math.max(1, last30Days.length))} min` },
+            { label: 'Engagement Rate', value: `${Math.round(last30Days.filter(l => l.hobbies.practiceMinutes > 0).length / Math.max(1, last30Days.length) * 100)}%` },
           ],
           explanation: 'Measures time invested in personal interests and skill development. Regular, focused practice drives improvement.',
         };
@@ -121,43 +128,58 @@ const PillarDetail = () => {
               </span>
               <span className="text-2xl text-muted-foreground ml-2">/100</span>
             </div>
-            <div className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-full',
-              score.trend === 'up' ? 'bg-pillar-finance/10 text-pillar-finance' :
-              score.trend === 'down' ? 'bg-pillar-health/10 text-pillar-health' :
-              'bg-muted text-muted-foreground'
-            )}>
-              <span className="text-lg">{trendIcon}</span>
-              <span className="font-medium">{Math.abs(score.change)} pts</span>
-              <span className="text-sm opacity-80">vs last period</span>
-            </div>
+            {hasData && (
+              <div className={cn(
+                'flex items-center gap-2 px-4 py-2 rounded-full',
+                score.trend === 'up' ? 'bg-pillar-finance/10 text-pillar-finance' :
+                score.trend === 'down' ? 'bg-pillar-health/10 text-pillar-health' :
+                'bg-muted text-muted-foreground'
+              )}>
+                <span className="text-lg">{trendIcon}</span>
+                <span className="font-medium">{Math.abs(score.change)} pts</span>
+                <span className="text-sm opacity-80">vs last period</span>
+              </div>
+            )}
           </div>
 
+          {/* Score Explanation */}
+          {!hasData && (
+            <div className="text-center py-6 text-muted-foreground">
+              <p>No data logged yet. Score will calculate as you log days.</p>
+            </div>
+          )}
+
           {/* Trend Chart */}
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-4">Score Trend (30 days)</h3>
-            <TrendChart data={history} pillar={id as Pillar} height={250} />
-          </div>
+          {hasData && history.length > 0 && (
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-4">Score Trend (30 days)</h3>
+              <TrendChart data={history} pillar={id as Pillar} height={250} />
+            </div>
+          )}
         </div>
 
         {/* Metrics Grid */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Raw Metrics</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {metrics.map((metric, i) => (
-              <div key={i} className="glass-card rounded-xl p-4">
-                <p className="text-sm text-muted-foreground mb-1">{metric.label}</p>
-                <p className="text-2xl font-semibold">{metric.value}</p>
-              </div>
-            ))}
+        {hasData && metrics.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Raw Metrics</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {metrics.map((metric, i) => (
+                <div key={i} className="glass-card rounded-xl p-4">
+                  <p className="text-sm text-muted-foreground mb-1">{metric.label}</p>
+                  <p className="text-2xl font-semibold">{metric.value}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Explanation */}
-        <div className="glass-card rounded-xl p-6">
-          <h3 className="font-medium mb-2">How this score is calculated</h3>
-          <p className="text-muted-foreground leading-relaxed">{explanation}</p>
-        </div>
+        {explanation && (
+          <div className="glass-card rounded-xl p-6">
+            <h3 className="font-medium mb-2">How this score is calculated</h3>
+            <p className="text-muted-foreground leading-relaxed">{explanation}</p>
+          </div>
+        )}
       </div>
     </Layout>
   );

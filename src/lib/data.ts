@@ -93,36 +93,47 @@ export const mockLogs: DailyLog[] = [];
 export const calculatePillarScore = (logs: DailyLog[], pillar: Pillar, days: number = 30): number => {
   const recentLogs = logs.slice(-days);
   
+  // Return 0 if no logs exist
+  if (recentLogs.length === 0) {
+    return 0;
+  }
+  
+  const logCount = recentLogs.length;
+  
   switch (pillar) {
     case 'finance': {
-      const avgSavings = recentLogs.reduce((sum, log) => sum + log.finance.savingsAdded, 0) / days;
-      const avgSpending = recentLogs.reduce((sum, log) => sum + log.finance.moneySpent, 0) / days;
-      const ratio = avgSavings / (avgSpending + 1);
-      return Math.min(100, Math.max(0, ratio * 30 + 40));
+      const totalSavings = recentLogs.reduce((sum, log) => sum + log.finance.savingsAdded, 0);
+      const totalSpending = recentLogs.reduce((sum, log) => sum + log.finance.moneySpent, 0);
+      // If no spending and no savings, return 0
+      if (totalSpending === 0 && totalSavings === 0) {
+        return 0;
+      }
+      const ratio = totalSavings / (totalSpending + 1);
+      return Math.min(100, Math.max(0, ratio * 30 + (totalSavings > 0 ? 20 : 0)));
     }
     case 'career': {
-      const avgStudy = recentLogs.reduce((sum, log) => sum + log.career.minutesStudied, 0) / days;
+      const avgStudy = recentLogs.reduce((sum, log) => sum + log.career.minutesStudied, 0) / logCount;
       const projectDays = recentLogs.filter(log => log.career.projectWork).length;
-      return Math.min(100, (avgStudy / 60) * 40 + (projectDays / days) * 60);
+      return Math.min(100, (avgStudy / 60) * 40 + (projectDays / logCount) * 60);
     }
     case 'health': {
-      const avgSleep = recentLogs.reduce((sum, log) => sum + log.health.sleepHours, 0) / days;
+      const avgSleep = recentLogs.reduce((sum, log) => sum + log.health.sleepHours, 0) / logCount;
       const workoutDays = recentLogs.filter(log => log.health.workoutDone).length;
-      const avgMood = recentLogs.reduce((sum, log) => sum + log.health.moodScale, 0) / days;
+      const avgMood = recentLogs.reduce((sum, log) => sum + log.health.moodScale, 0) / logCount;
       const sleepScore = Math.min(1, avgSleep / 7.5) * 35;
-      const workoutScore = (workoutDays / days) * 35;
+      const workoutScore = (workoutDays / logCount) * 35;
       const moodScore = (avgMood / 5) * 30;
       return Math.min(100, sleepScore + workoutScore + moodScore);
     }
     case 'spirituality': {
       const prayerDays = recentLogs.filter(log => log.spirituality.prayerDone).length;
-      const avgReflection = recentLogs.reduce((sum, log) => sum + log.spirituality.reflectionMinutes, 0) / days;
-      return Math.min(100, (prayerDays / days) * 60 + Math.min(40, avgReflection * 2));
+      const avgReflection = recentLogs.reduce((sum, log) => sum + log.spirituality.reflectionMinutes, 0) / logCount;
+      return Math.min(100, (prayerDays / logCount) * 60 + Math.min(40, avgReflection * 2));
     }
     case 'hobbies': {
-      const avgPractice = recentLogs.reduce((sum, log) => sum + log.hobbies.practiceMinutes, 0) / days;
+      const avgPractice = recentLogs.reduce((sum, log) => sum + log.hobbies.practiceMinutes, 0) / logCount;
       const techniqueDays = recentLogs.filter(log => log.hobbies.techniquePracticed).length;
-      return Math.min(100, (avgPractice / 45) * 60 + (techniqueDays / days) * 40);
+      return Math.min(100, (avgPractice / 45) * 60 + (techniqueDays / logCount) * 40);
     }
   }
 };

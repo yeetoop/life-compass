@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { LogProvider } from "@/context/LogContext";
 import Index from "./pages/Index";
 import DailyLog from "./pages/DailyLog";
 import PillarDetail from "./pages/PillarDetail";
@@ -15,18 +16,20 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/log" element={<DailyLog />} />
-          <Route path="/pillar/:id" element={<PillarDetail />} />
-          <Route path="/insights" element={<Insights />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <LogProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/log" element={<DailyLog />} />
+            <Route path="/pillar/:id" element={<PillarDetail />} />
+            <Route path="/insights" element={<Insights />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </LogProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
