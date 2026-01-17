@@ -1,6 +1,6 @@
 # LifeOS
 
-A personal life dashboard that helps visualize long-term growth across key life pillars using data, trends, and reflection — not motivation or gamification.
+A personal life dashboard that helps visualize long-term growth across key life pillars using data, trends, and reflection. 
 
 ---
 
@@ -18,6 +18,7 @@ LifeOS is a private, single-user web app designed to track and visualize progres
 
 The app focuses on clarity, balance, and direction by converting simple daily inputs into meaningful trends and visual summaries.
 
+P.S: Initially made it to help myself work out on stuff and keep track in my life to estimate where i'm standing. Still in alpha stages, There's a lot more to work on
 ---
 
 ## Philosophy
@@ -59,7 +60,7 @@ Steps:
 
 ```sh
 # Clone the repository
-git clone ---
+git clone https://github.com/yeetoop/life-compass
 # Navigate into the project directory
 cd ---
 
